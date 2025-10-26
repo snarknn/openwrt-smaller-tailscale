@@ -19,8 +19,8 @@ jobs:
     strategy:
       matrix:
         # cannot UPX compress these versions, so I'm not building for it:
-        # mips64, mips64le 
-        arch: [mips, mipsle, armv6, armv7, arm64, amd64, 386] 
+        # mips64, mips64le
+        arch: [mips, mipsle, armv6, armv7, arm64, amd64, 386]
 
     steps:
       - name: Checkout code
@@ -31,7 +31,7 @@ jobs:
         with:
           go-version: '1.24.2'
           cache: false
-          
+
       - name: Install UPX
         run: |
           sudo apt-get update
@@ -59,4 +59,11 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           artifacts: './artifacts/**/*.tar.gz'
-          tag: v${{ inputs.version }}
+          tag: ${{ inputs.version }}
+          body: |
+            This is a build of Tailscale ${{ inputs.version }} for OpenWRT.
+
+            For details about this Tailscale release, see:
+            https://github.com/tailscale/tailscale/releases/tag/v${{ inputs.version }}
+
+
