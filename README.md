@@ -6,7 +6,28 @@
 > [!NOTE]
 > This project is not affiliated with Tailscale. Use at your own risk.
 
+
 ## Installation
+
+### Quick install (recommended)
+
+You can install or update Tailscale in one command directly on your OpenWRT router:
+
+```sh
+sh <(wget -O - https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailscale/main/install.sh)
+```
+
+This script will automatically:
+- Download the latest compatible Tailscale build
+- Install required dependencies
+- Set up the network and firewall
+- Start and enable Tailscale
+
+Follow the prompts in the script to complete authentication.
+
+---
+
+### Manual installation (advanced)
 
 1. Update packages & Install required dependencies:
 
