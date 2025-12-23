@@ -105,36 +105,6 @@ if [ ! -f /etc/openwrt_version ]; then
     exit 1
 fi
 
-get_lan_network() {
-    local lan="" override="${TAILSCALE_LAN_INTERFACE:-}"
-
-    if [ -n "$override" ]; then
-        if uci -q show network.$override >/dev/null 2>&1; then
-            lan="$override"
-        else
-            echo "Warning: TAILSCALE_LAN_INTERFACE '$override' not found, auto-detecting." >&2
-        fi
-    fi
-
-    if [ -z "$lan" ] && uci -q show network.lan >/dev/null 2>&1; then
-        lan="lan"
-    fi
-
-    if [ -z "$lan" ]; then
-        lan=$(uci show network | awk -F. '/=interface/ {print $2}' | while read if; do
-            if [ "$(uci -q get network.$if.proto)" = "static" ] && [ -n "$(uci -q get network.$if.ipaddr)" ]; then
-                echo "$if"
-                break
-            fi
-        done)
-    fi
-
-    [ -z "$lan" ] && return 1
-    local ip=$(uci -q get network.$lan.ipaddr) mask=$(uci -q get network.$lan.netmask)
-    [ -z "$ip" ] || [ -z "$mask" ] && return 1
-    ipcalc.sh "$ip" "$mask" 2>/dev/null | awk -F= '/NETWORK/ {print $2}'
-}
-
 echo "OpenWRT Smaller Tailscale Installer"
 echo "==================================="
 
@@ -323,10 +293,11 @@ main() {
         /etc/init.d/tailscale start
         echo "Authenticating... (visit the URL in your browser)"
 
-        local lan=$(get_lan_network)
-        if [ -n "$lan" ]; then
-            echo "Detected LAN: $lan"
-            tailscale up --accept-dns=false --advertise-routes="$lan" || { echo "Error: Authentication failed" >&2; exit 1; }
+        # Optional advertise-routes via environment variable
+        local advertise_route="${TAILSCALE_ADVERTISE_ROUTE:-}"
+        if [ -n "$advertise_route" ]; then
+            echo "Advertising route: $advertise_route"
+            tailscale up --accept-dns=false --advertise-routes="$advertise_route" || { echo "Error: Authentication failed" >&2; exit 1; }
         else
             tailscale up --accept-dns=false || { echo "Error: Authentication failed" >&2; exit 1; }
         fi
@@ -338,7 +309,7 @@ main() {
         configure_firewall
         /etc/init.d/network reload; /etc/init.d/firewall reload
 
-        echo "Installation complete!" && [ -n "$lan" ] && echo "Advertising: $lan"
+        echo "Installation complete!"
     fi
 }
 

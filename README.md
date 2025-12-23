@@ -25,6 +25,25 @@ This script will automatically:
 
 Follow the prompts in the script to complete authentication.
 
+### Environment Variables
+
+You can customize the installation by setting environment variables:
+
+- **`TAILSCALE_ADVERTISE_ROUTE`** - Specify CIDR route(s) to advertise to your Tailnet (e.g., `192.168.1.0/24`). Multiple routes can be comma-separated (e.g., `192.168.1.0/24,10.0.0.0/24`). If not set, no routes will be advertised.
+
+**Examples:**
+
+```sh
+# Install with route advertising
+TAILSCALE_ADVERTISE_ROUTE="192.168.1.0/24" sh <(wget -O - https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailscale/main/install.sh)
+
+# Install with multiple routes
+TAILSCALE_ADVERTISE_ROUTE="192.168.1.0/24,10.0.0.0/24" sh <(wget -O - https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailscale/main/install.sh)
+
+# Install without route advertising (default)
+sh <(wget -O - https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailscale/main/install.sh)
+```
+
 ---
 
 ### Manual installation (advanced)
