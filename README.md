@@ -56,7 +56,7 @@ sh <(wget -O - https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailsca
    ```
 
 2. From your local machine, download the appropriate tarball from
-   [Releases](https://github.com/du-cki/openwrt-smaller-tailscale/releases), then copy it to the router’s `/tmp` folder with a simple name:
+   [Releases](https://github.com/snarknn/openwrt-smaller-tailscale/releases), then copy it to the router’s `/tmp` folder with a simple name:
 
    ```sh
    scp -O tailscale_<version>_<arch>.tar.gz root@192.168.1.1:/tmp/tailscale.tar.gz
@@ -72,7 +72,7 @@ sh <(wget -O - https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailsca
 
    ```sh
    /etc/init.d/tailscale start
-   tailscale up --accept-dns=false --advertise-routes=10.0.0.0/24
+   tailscale up --accept-dns=false --netfilter-mode=off
    ```
 
 5. Enable on boot:

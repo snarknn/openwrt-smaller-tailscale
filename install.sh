@@ -303,9 +303,9 @@ main() {
         local advertise_route="${TAILSCALE_ADVERTISE_ROUTE:-}"
         if [ -n "$advertise_route" ]; then
             echo "Advertising route: $advertise_route"
-            tailscale up --accept-dns=false --advertise-routes="$advertise_route" || { echo "Error: Authentication failed" >&2; exit 1; }
+            tailscale up --accept-dns=false --netfilter-mode=off --advertise-routes="$advertise_route" || { echo "Error: Authentication failed" >&2; exit 1; }
         else
-            tailscale up --accept-dns=false || { echo "Error: Authentication failed" >&2; exit 1; }
+            tailscale up --accept-dns=false --netfilter-mode=off || { echo "Error: Authentication failed" >&2; exit 1; }
         fi
 
         /etc/init.d/tailscale enable
