@@ -121,8 +121,14 @@ get_arch() {
 
 install_dependencies() {
     echo "Updating packages..." && opkg update
-    for pkg in kmod-tun iptables-nft wget jsonfilter; do
-        opkg list-installed "$pkg" >/dev/null 2>&1 || { echo "Installing $pkg..."; opkg install "$pkg"; }
+    echo "Checking and installing dependencies..."
+    for pkg in kmod-tun iptables-nft wget jsonfilter ca-bundle ca-certificates; do
+        if ! opkg list-installed | grep -q "^$pkg - "; then
+            echo "Installing $pkg..."
+            opkg install "$pkg"
+        else
+            echo "$pkg is already installed"
+        fi
     done
 }
 
