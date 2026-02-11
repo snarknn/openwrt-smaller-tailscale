@@ -30,6 +30,7 @@ Follow the prompts in the script to complete authentication.
 You can customize the installation by setting environment variables:
 
 - **`TAILSCALE_ADVERTISE_ROUTE`** - Specify CIDR route(s) to advertise to your Tailnet (e.g., `192.168.1.0/24`). Multiple routes can be comma-separated (e.g., `192.168.1.0/24,10.0.0.0/24`). If not set, no routes will be advertised.
+- **`TAILSCALE_LOGIN_SERVER`** - Custom control server URL (e.g., `https://headscale.example.com`). If not set during upgrades, the installer tries to reuse the current control server from the existing Tailscale prefs.
 
 **Examples:**
 
@@ -39,6 +40,9 @@ TAILSCALE_ADVERTISE_ROUTE="192.168.1.0/24" sh <(wget -O - https://raw.githubuser
 
 # Install with multiple routes
 TAILSCALE_ADVERTISE_ROUTE="192.168.1.0/24,10.0.0.0/24" sh <(wget -O - https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailscale/main/install.sh)
+
+# Install with a custom login server (headscale)
+TAILSCALE_LOGIN_SERVER="https://headscale.example.com" sh <(wget -O - https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailscale/main/install.sh)
 
 # Install without route advertising (default)
 sh <(wget -O - https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailscale/main/install.sh)
@@ -73,6 +77,9 @@ sh <(wget -O - https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailsca
    ```sh
    /etc/init.d/tailscale start
    tailscale up --accept-dns=false --netfilter-mode=off
+
+   # For headscale, add your control server URL:
+   # tailscale up --accept-dns=false --netfilter-mode=off --login-server=https://headscale.example.com
    ```
 
 5. Enable on boot:

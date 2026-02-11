@@ -58,6 +58,21 @@ find_asset_url_by_name() {
 # Normalize version string (remove 'v' prefix)
 normalize_version() { echo "${1#v}"; }
 
+get_current_login_server() {
+    local control_url
+    control_url=$(tailscale debug prefs 2>/dev/null | jsonfilter -e '@.ControlURL' 2>/dev/null)
+    [ -n "$control_url" ] || return 1
+    echo "$control_url"
+}
+
+build_tailscale_up_args() {
+    local login_server="$1" advertise_route="$2" args
+    args="--accept-dns=false --netfilter-mode=off"
+    [ -n "$login_server" ] && args="$args --login-server=$login_server"
+    [ -n "$advertise_route" ] && args="$args --advertise-routes=$advertise_route"
+    echo "$args"
+}
+
 get_latest_version() {
     ensure_release_info || return 1
     local ver=$(json_query '@.tag_name')
@@ -215,6 +230,16 @@ main() {
         fi
     fi
 
+    # Resolve login server for upgrades if env var is not set
+    local advertise_route="${TAILSCALE_ADVERTISE_ROUTE:-}"
+    local login_server="${TAILSCALE_LOGIN_SERVER:-}"
+    if [ $is_upgrade -eq 1 ] && [ -z "$login_server" ]; then
+        if ! login_server=$(get_current_login_server); then
+            echo "Error: Failed to detect current login server" >&2
+            exit 1
+        fi
+    fi
+
     # Normalize both versions for comparison
     local normalized_new_version=$(normalize_version "$version")
     local needs_install=1
@@ -293,20 +318,25 @@ main() {
         echo "Skipping download: binaries already up to date."
     fi
 
+    local up_args
+    up_args=$(build_tailscale_up_args "$login_server" "$advertise_route")
+
     if [ $is_upgrade -eq 1 ]; then
-        /etc/init.d/tailscale start && echo "Upgrade complete!"
+        /etc/init.d/tailscale start
+        echo "Reapplying configuration..."
+        if ! tailscale up $up_args; then
+            echo "Error: Authentication failed" >&2
+            do_rollback
+            exit 1
+        fi
+        echo "Upgrade complete!"
     else
         /etc/init.d/tailscale start
         echo "Authenticating... (visit the URL in your browser)"
-
-        # Optional advertise-routes via environment variable
-        local advertise_route="${TAILSCALE_ADVERTISE_ROUTE:-}"
         if [ -n "$advertise_route" ]; then
             echo "Advertising route: $advertise_route"
-            tailscale up --accept-dns=false --netfilter-mode=off --advertise-routes="$advertise_route" || { echo "Error: Authentication failed" >&2; exit 1; }
-        else
-            tailscale up --accept-dns=false --netfilter-mode=off || { echo "Error: Authentication failed" >&2; exit 1; }
         fi
+        tailscale up $up_args || { echo "Error: Authentication failed" >&2; exit 1; }
 
         /etc/init.d/tailscale enable
         ls /etc/rc.d/S*tailscale* >/dev/null 2>&1 || { echo "Error: Autostart failed" >&2; exit 1; }
