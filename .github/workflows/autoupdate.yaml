@@ -25,7 +25,6 @@ jobs:
         run: |
           latest=$(curl -s https://api.github.com/repos/tailscale/tailscale/releases/latest | jq -r .tag_name)
           version=${latest#v}
-          echo "latest tailscale release is $version"
           echo "version=$version" >> $GITHUB_OUTPUT
 
       - name: Compare versions
@@ -33,7 +32,7 @@ jobs:
         env:
           version: ${{ steps.tailscale-release.outputs.version }}
         run: |
-          repo_version=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
+          repo_version=$(git tag --sort=-v:refname 2>/dev/null | head -n 1 || echo "none")
           if [[ "$repo_version" != "$version" ]]; then
             echo "New Tailscale version $version available (current: $repo_version)"
             echo "should_build=true" >> $GITHUB_OUTPUT
