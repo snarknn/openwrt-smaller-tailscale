@@ -54,6 +54,24 @@ sh <(wget -O - https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailsca
 
 1. Update packages & Install required dependencies:
 
+   > [!NOTE]
+   > OpenWRT **25.05 and newer** use the `apk` package manager instead of `opkg`.
+   > Use the commands for your version below.
+   >
+   > On 25.05+ the `iptables-nft` package may be unavailable (the default firewall
+   > is `fw4`/nftables and user-space `iptables` was dropped). It is not required
+   > here because Tailscale runs with `--netfilter-mode=off`; if `apk add` reports
+   > it as unknown, you can omit it.
+
+   **OpenWRT 25.05+ (apk):**
+
+   ```sh
+   apk update
+   apk add kmod-tun iptables-nft
+   ```
+
+   **OpenWRT 24.10 and older (opkg):**
+
    ```sh
    opkg update
    opkg install kmod-tun iptables-nft

@@ -123,6 +123,52 @@ fi
 echo "OpenWRT Smaller Tailscale Installer"
 echo "==================================="
 
+# Report the running OpenWRT version for tracking purposes
+if [ -f /etc/openwrt_version ]; then
+    echo "OpenWRT version: $(cat /etc/openwrt_version)"
+fi
+
+# Detect the package manager. OpenWRT 25.05+ ships `apk` (Alpine's package
+# manager); older releases use `opkg`. We pick whichever binary is available
+# so the script stays correct across versions without hardcoding a cutoff.
+PKG_MANAGER=""
+if command -v apk >/dev/null 2>&1; then
+    PKG_MANAGER="apk"
+elif command -v opkg >/dev/null 2>&1; then
+    PKG_MANAGER="opkg"
+else
+    echo "Error: No supported package manager found (expected 'apk' or 'opkg')" >&2
+    exit 1
+fi
+echo "Using package manager: $PKG_MANAGER"
+
+# Wrapper: refresh the package lists
+pkg_update() {
+    if [ "$PKG_MANAGER" = "apk" ]; then
+        apk update
+    else
+        opkg update
+    fi
+}
+
+# Wrapper: return success (0) if the given package is installed
+pkg_is_installed() {
+    if [ "$PKG_MANAGER" = "apk" ]; then
+        apk info -e "$1" >/dev/null 2>&1
+    else
+        opkg list-installed | grep -q "^$1 - "
+    fi
+}
+
+# Wrapper: install the given package
+pkg_install() {
+    if [ "$PKG_MANAGER" = "apk" ]; then
+        apk add "$1"
+    else
+        opkg install "$1"
+    fi
+}
+
 get_arch() {
     case $(uname -m) in
         x86_64) echo "amd64";;
@@ -135,14 +181,22 @@ get_arch() {
 }
 
 install_dependencies() {
-    echo "Updating packages..." && opkg update
+    echo "Updating packages..." && pkg_update
     echo "Checking and installing dependencies..."
     for pkg in kmod-tun iptables-nft wget jsonfilter ca-bundle ca-certificates; do
-        if ! opkg list-installed | grep -q "^$pkg - "; then
-            echo "Installing $pkg..."
-            opkg install "$pkg"
-        else
+        if pkg_is_installed "$pkg"; then
             echo "$pkg is already installed"
+            continue
+        fi
+        echo "Installing $pkg..."
+        if pkg_install "$pkg"; then
+            echo "$pkg installed"
+        else
+            # Some packages may be unavailable (e.g. iptables-nft was dropped in
+            # OpenWRT 25.05+ where fw4/nftables is the default firewall) or built
+            # into the kernel (e.g. kmod-tun on some targets). Tailscale runs with
+            # --netfilter-mode=off, so a missing iptables-nft is not fatal.
+            echo "Warning: failed to install $pkg (it may be unavailable or built-in for this OpenWRT version/target); continuing" >&2
         fi
     done
 }
