@@ -59,7 +59,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           artifacts: './artifacts/**/*.tar.gz'
-          tag: ${{ inputs.version }}
+          tag: v${{ inputs.version }}
           body: |
             This is a build of Tailscale ${{ inputs.version }} for OpenWRT.
 

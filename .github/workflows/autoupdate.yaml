@@ -33,6 +33,7 @@ jobs:
           version: ${{ steps.tailscale-release.outputs.version }}
         run: |
           repo_version=$(git tag --sort=-v:refname 2>/dev/null | head -n 1 || echo "none")
+          repo_version=${repo_version#v}
           if [[ "$repo_version" != "$version" ]]; then
             echo "New Tailscale version $version available (current: $repo_version)"
             echo "should_build=true" >> $GITHUB_OUTPUT
