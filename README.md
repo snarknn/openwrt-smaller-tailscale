@@ -11,10 +11,24 @@
 
 ### Quick install (recommended)
 
-You can install or update Tailscale in one command directly on your OpenWRT router:
+Before running the installer, ensure `curl` and CA certificates are installed using the command for your version.
+
+OpenWRT 25.05+ (`apk`):
 
 ```sh
-sh <(wget -O - https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailscale/main/install.sh)
+apk update && apk add curl ca-bundle ca-certificates
+```
+
+OpenWRT 24.10 and older (`opkg`):
+
+```sh
+opkg update && opkg install curl ca-bundle ca-certificates
+```
+
+Then install or update Tailscale:
+
+```sh
+sh <(curl -fsSL https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailscale/main/install.sh)
 ```
 
 This script will automatically:
@@ -36,16 +50,16 @@ You can customize the installation by setting environment variables:
 
 ```sh
 # Install with route advertising
-TAILSCALE_ADVERTISE_ROUTE="192.168.1.0/24" sh <(wget -O - https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailscale/main/install.sh)
+TAILSCALE_ADVERTISE_ROUTE="192.168.1.0/24" sh <(curl -fsSL https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailscale/main/install.sh)
 
 # Install with multiple routes
-TAILSCALE_ADVERTISE_ROUTE="192.168.1.0/24,10.0.0.0/24" sh <(wget -O - https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailscale/main/install.sh)
+TAILSCALE_ADVERTISE_ROUTE="192.168.1.0/24,10.0.0.0/24" sh <(curl -fsSL https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailscale/main/install.sh)
 
 # Install with a custom login server (headscale)
-TAILSCALE_LOGIN_SERVER="https://headscale.example.com" sh <(wget -O - https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailscale/main/install.sh)
+TAILSCALE_LOGIN_SERVER="https://headscale.example.com" sh <(curl -fsSL https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailscale/main/install.sh)
 
 # Install without route advertising (default)
-sh <(wget -O - https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailscale/main/install.sh)
+sh <(curl -fsSL https://raw.githubusercontent.com/snarknn/openwrt-smaller-tailscale/main/install.sh)
 ```
 
 ---

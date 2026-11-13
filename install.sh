@@ -28,7 +28,9 @@ ensure_release_info() {
 
     local api_url="https://api.github.com/repos/snarknn/openwrt-smaller-tailscale/releases/latest"
     RELEASE_INFO_FILE=$(mktemp /tmp/tailscale_release.XXXXXX)
-    if ! wget -qO "$RELEASE_INFO_FILE" --header="Accept: application/vnd.github.v3+json" "$api_url"; then
+    if ! curl -fsSL --retry 3 --connect-timeout 15 \
+        -H "Accept: application/vnd.github.v3+json" \
+        -o "$RELEASE_INFO_FILE" "$api_url"; then
         echo "Error: Failed to get release info from GitHub" >&2
         rm -f "$RELEASE_INFO_FILE"
         RELEASE_INFO_FILE=""
@@ -183,7 +185,7 @@ get_arch() {
 install_dependencies() {
     echo "Updating packages..." && pkg_update
     echo "Checking and installing dependencies..."
-    for pkg in kmod-tun iptables-nft wget jsonfilter ca-bundle ca-certificates; do
+    for pkg in kmod-tun iptables-nft curl jsonfilter ca-bundle ca-certificates; do
         if pkg_is_installed "$pkg"; then
             echo "$pkg is already installed"
             continue
@@ -199,6 +201,11 @@ install_dependencies() {
             echo "Warning: failed to install $pkg (it may be unavailable or built-in for this OpenWRT version/target); continuing" >&2
         fi
     done
+
+    if ! command -v curl >/dev/null 2>&1; then
+        echo "Error: curl is required to download Tailscale" >&2
+        return 1
+    fi
 }
 
 configure_network() {
@@ -313,7 +320,8 @@ main() {
         echo "Downloading Tailscale ${version} for ${arch}..."
         DOWNLOAD_FILE="/tmp/tailscale_${version}_${arch}.tar.gz"
 
-        if ! wget -O "$DOWNLOAD_FILE" "$asset_url"; then
+        if ! curl -fSL --retry 3 --connect-timeout 15 \
+            -o "$DOWNLOAD_FILE" "$asset_url"; then
             echo "Error: Failed to download Tailscale" >&2
             exit 1
         fi
